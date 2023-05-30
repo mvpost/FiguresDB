@@ -1,5 +1,7 @@
 package ru.mtsbank.figures;
 
+import jakarta.persistence.criteria.*;
+import org.hibernate.query.Query;
 import ru.mtsbank.figures.definition.*;
 
 import org.hibernate.HibernateException;
@@ -7,9 +9,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.query.Query;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class ManageFigure {
@@ -46,7 +46,7 @@ public class ManageFigure {
         manageFigure.listFigures();
 
         /* Selection of figures by color */
-        manageFigure.listFiguresByColors("green");
+        manageFigure.listFiguresByColors("red");
     }
 
     /* Delete all records */
@@ -56,10 +56,16 @@ public class ManageFigure {
 
         try {
             tx = session.beginTransaction();
-            Query query = session.createQuery("delete from Figure");
-            query.executeUpdate();
-            query = session.createQuery("delete from Color");
-            query.executeUpdate();
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+
+            CriteriaDelete<Figure> criteriaDeleteFigure = cb.createCriteriaDelete(Figure.class);
+            criteriaDeleteFigure.from(Figure.class);
+            session.createQuery(criteriaDeleteFigure).executeUpdate();
+
+            CriteriaDelete<Color> criteriaDeleteColor = cb.createCriteriaDelete(Color.class);
+            criteriaDeleteColor.from(Color.class);
+            session.createQuery(criteriaDeleteColor).executeUpdate();
+
             tx.commit();
         } catch (HibernateException e) {
             if (tx != null) tx.rollback();
@@ -76,10 +82,10 @@ public class ManageFigure {
         try {
             tx = session.beginTransaction();
             Color color = new Color(name, redCode, greenCode, blueCode);
-            session.save(color);
+            session.persist(color);
             Figure figure = new Figure(figureType);
             figure.setColor(color);
-            session.save(figure);
+            session.persist(figure);
             tx.commit();
         } catch (HibernateException e) {
             if (tx != null) tx.rollback();
@@ -96,10 +102,11 @@ public class ManageFigure {
 
         try {
             tx = session.beginTransaction();
-            List colors = session.createQuery("FROM Color").list();
+            CriteriaQuery<Color> cq = session.getCriteriaBuilder().createQuery(Color.class);
+            cq.from(Color.class);
+            List<Color> colors = session.createQuery(cq).getResultList();
             System.out.println("=====All Colors=====");
-            for (Iterator iterator = colors.iterator(); iterator.hasNext(); ) {
-                Color color = (Color) iterator.next();
+            for (Color color : colors) {
                 System.out.print("Name: " + color.getName());
                 System.out.print("  Red Code: " + color.getRedCode());
                 System.out.print("  Green Code: " + color.getGreenCode());
@@ -121,10 +128,11 @@ public class ManageFigure {
 
         try {
             tx = session.beginTransaction();
-            List figures = session.createQuery("FROM Figure").list();
+            CriteriaQuery<Figure> cq = session.getCriteriaBuilder().createQuery(Figure.class);
+            cq.from(Figure.class);
+            List<Figure> figures = session.createQuery(cq).getResultList();
             System.out.println("=====All Figures=====");
-            for (Iterator iterator = figures.iterator(); iterator.hasNext(); ) {
-                Figure figure = (Figure) iterator.next();
+            for (Figure figure : figures) {
                 System.out.print("Type: " + figure.getType());
                 System.out.print("  Color Name: " + figure.getColor().getName());
                 System.out.print("  R: " + figure.getColor().getRedCode());
@@ -143,16 +151,24 @@ public class ManageFigure {
     /* Read figures by color */
     public void listFiguresByColors(String color) {
         Session session = factory.openSession();
+        CriteriaBuilder cb = session.getCriteriaBuilder();
         Transaction tx = null;
+
         try {
             tx = session.beginTransaction();
-            List figures = session.createQuery("FROM Figure").list();
+
+            final CriteriaQuery<Figure> criteria = cb.createQuery( Figure.class );
+            final Root<Color> root = criteria.from( Color.class );
+
+            criteria.select( root.get( Color_.FIGURE ) );
+            criteria.where( cb.equal( root.get( Color_.NAME ), color ) );
+            Query<Figure> query = session.createQuery(criteria);
+            List<Figure> figures = query.getResultList();
+
             System.out.println("======" + color + " figures=====");
-            for (Iterator iterator = figures.iterator(); iterator.hasNext(); ) {
-                Figure figure = (Figure) iterator.next();
-                if (figure.getColor().getName().equals(color)) {
-                    System.out.print("Type: " + figure.getType());
-                }
+
+            for (Figure figure : figures) {
+                System.out.print("Type: " + figure.getType());
             }
             tx.commit();
         } catch (HibernateException e) {
