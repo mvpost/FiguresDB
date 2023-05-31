@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "color", schema = "public")
@@ -13,21 +14,22 @@ public class Color {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, insertable = true, updatable = true)
     private int id;
-    @Column(name = "name", nullable = true, length = 20)
+    @Column(name = "name", nullable = false, length = 20)
+    @Size(min = 2)
+    @Size(max = 20)
     private String name;
-    @Column(name = "red_code", nullable = true)
+    @Column(name = "red_code", nullable = false)
     @Min(value = 0)
     @Max(value = 255)
     private int redCode;
-    @Column(name = "green_code", nullable = true)
+    @Column(name = "green_code", nullable = false)
     @Min(value = 0)
     @Max(value = 255)
     private int greenCode;
-    @Column(name = "blue_code", nullable = true)
+    @Column(name = "blue_code", nullable = false)
     @Min(value= 0)
     @Max(value = 255)
     private int blueCode;
-
 
     @OneToMany(targetEntity = Figure.class, mappedBy = "color")
     private List<Figure> figure;

@@ -1,5 +1,8 @@
 package ru.mtsbank.figures;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 import jakarta.persistence.criteria.*;
 import org.hibernate.query.Query;
 import ru.mtsbank.figures.definition.*;
@@ -11,7 +14,6 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 
 import java.util.List;
-
 public class ManageFigure {
     private static SessionFactory factory;
 
@@ -51,27 +53,26 @@ public class ManageFigure {
 
     /* Delete all records */
     public void deleteRecords() {
-        Session session = factory.openSession();
-        Transaction tx = null;
 
-        try {
-            tx = session.beginTransaction();
-            CriteriaBuilder cb = session.getCriteriaBuilder();
+        try (Session session = factory.openSession()) {
+            EntityManagerFactory emf = Persistence.createEntityManagerFactory("my-persistence-unit");
+            EntityManager em = emf.createEntityManager();
+            em.getTransaction().begin();
+            CriteriaBuilder cBuilder = em.getCriteriaBuilder();
 
-            CriteriaDelete<Figure> criteriaDeleteFigure = cb.createCriteriaDelete(Figure.class);
-            criteriaDeleteFigure.from(Figure.class);
-            session.createQuery(criteriaDeleteFigure).executeUpdate();
+            CriteriaDelete<Figure> cdf = cBuilder.createCriteriaDelete(Figure.class);
+            Root<Figure> rootFigure = cdf.from(Figure.class);
+            cdf.where(rootFigure.get("id").isNotNull());
+            em.createQuery(cdf).executeUpdate();
 
-            CriteriaDelete<Color> criteriaDeleteColor = cb.createCriteriaDelete(Color.class);
-            criteriaDeleteColor.from(Color.class);
-            session.createQuery(criteriaDeleteColor).executeUpdate();
+            CriteriaDelete<Color> cdc = cBuilder.createCriteriaDelete(Color.class);
+            Root<Color> rootColor = cdc.from(Color.class);
+            cdc.where(rootColor.get("id").isNotNull());
+            em.createQuery(cdc).executeUpdate();
 
-            tx.commit();
+            em.getTransaction().commit();
         } catch (HibernateException e) {
-            if (tx != null) tx.rollback();
             e.printStackTrace();
-        } finally {
-            session.close();
         }
     }
 

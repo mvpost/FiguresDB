@@ -1,6 +1,7 @@
 package ru.mtsbank.figures;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name="figure", schema="public")
@@ -9,7 +10,9 @@ public class Figure {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, insertable = true, updatable = true)
     private int id;
-    @Column(name = "type", nullable = true, length = 20)
+    @Column(name = "type", nullable = false, length = 20)
+    @Size(min = 1)
+    @Size(max = 20)
     private String type;
     @ManyToOne
     private Color color;
