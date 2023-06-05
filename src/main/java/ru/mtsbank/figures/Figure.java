@@ -1,16 +1,20 @@
 package ru.mtsbank.figures;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name="figure", schema="public")
 public class Figure {
     @Id
+    @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, insertable = true, updatable = true)
     private int id;
     @Column(name = "type", nullable = false, length = 20)
+    @NotEmpty
     @Size(min = 1)
     @Size(max = 20)
     private String type;
