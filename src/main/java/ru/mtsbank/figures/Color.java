@@ -37,14 +37,14 @@ public class Color {
     private List<@Valid Figure> figure;
 
     public Color() {}
-    public Color(String name, int redCode, int greenCode, int blueCode) {
+    public Color(@NotNull String name, int redCode, int greenCode, int blueCode) {
         this.name = name;
         this.redCode = redCode;
         this.greenCode = greenCode;
         this.blueCode = blueCode;
     }
 
-    public String getName() {
+    public @NotNull String getName() {
         return name;
     }
 
